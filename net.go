@@ -182,15 +182,6 @@ func (c *connImpl) Reset() {
 	c.index = 0
 }
 
-type IP net.IP
-
-func (ip IP) String() string {
-	if len(ip) == 0 {
-		return ""
-	}
-	return net.IP(ip).String()
-}
-
 func JoinHostPort(host string, port int) string {
 	return net.JoinHostPort(host, strconv.Itoa(port))
 }
