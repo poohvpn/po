@@ -12,14 +12,17 @@ const (
 	HttpBufferSize = 8 * 1024
 )
 
-func NewConn(c net.Conn) Conn {
+func NewConn(c net.Conn, noBuf ...bool) Conn {
 	if conn, ok := c.(Conn); ok {
 		return conn
 	}
-	return &connImpl{
+	conn := &connImpl{
 		Conn: c,
-		buf:  make([]byte, 0, HttpBufferSize),
 	}
+	if !(len(noBuf) > 0 && noBuf[0]) {
+		conn.buf = make([]byte, 0, HttpBufferSize)
+	}
+	return conn
 }
 
 type Conn interface {
