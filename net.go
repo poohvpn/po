@@ -96,6 +96,9 @@ func (c *connImpl) Byte() (byte, error) {
 }
 
 func (c *connImpl) Bytes(n int) ([]byte, error) {
+	if n <= 0 {
+		return nil, nil
+	}
 	b := make([]byte, n)
 	if c.dontFragment {
 		nr, err := c.Read(b)
@@ -115,12 +118,11 @@ func (c *connImpl) Bytes(n int) ([]byte, error) {
 }
 
 func (c *connImpl) BytesString(n int) (string, error) {
-	b := make([]byte, n)
-	_, err := io.ReadFull(c, b)
+	bs, err := c.Bytes(n)
 	if err != nil {
 		return "", err
 	}
-	return string(b), nil
+	return string(bs), nil
 }
 
 func (c *connImpl) Int(size int) (i int, err error) {
