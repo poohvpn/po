@@ -240,3 +240,51 @@ func (c *connImpl) WithDontFragment(dontFragment ...bool) Conn {
 func JoinHostPort(host string, port int) string {
 	return net.JoinHostPort(host, strconv.Itoa(port))
 }
+
+func NewListener(addr net.Addr) *Listener {
+	return &Listener{
+		addr:    addr,
+		connCh:  make(chan net.Conn),
+		closeCh: make(chan struct{}),
+	}
+}
+
+type Listener struct {
+	addr      net.Addr
+	connCh    chan net.Conn
+	closeCh   chan struct{}
+	closeOnce Once
+}
+
+var _ net.Listener = &Listener{}
+
+func (l *Listener) Send(conn net.Conn) {
+	if conn == nil {
+		return
+	}
+	select {
+	case l.connCh <- conn:
+	case <-time.After(3 * time.Second):
+		conn.Close()
+	}
+}
+
+func (l *Listener) Accept() (net.Conn, error) {
+	select {
+	case conn := <-l.connCh:
+		return conn, nil
+	case <-l.closeCh:
+		return nil, net.ErrClosed
+	}
+}
+
+func (l *Listener) Close() error {
+	l.closeOnce.Do(func() {
+		close(l.closeCh)
+	})
+	return nil
+}
+
+func (l *Listener) Addr() net.Addr {
+	return l.addr
+}
