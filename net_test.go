@@ -1,10 +1,11 @@
 package pooh
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
 	"net"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
 type ConnTest struct {
@@ -39,14 +40,33 @@ func (t *ConnTest) TestN() {
 	t.Equal([]byte("hello"), bs)
 }
 
-func (t *ConnTest) TestPreload() {
+func (t *ConnTest) TestDontFragment() {
+	t.conn.WithDontFragment()
+	go func() {
+		t.Require().NoError(Errors(t.one.Write([]byte("hell"))))
+		t.Require().NoError(Errors(t.one.Write([]byte("o"))))
+	}()
+
+	bs, err := t.conn.Bytes(5)
+	t.EqualError(err, "pooh.Conn: should not fragment")
+	t.Equal([]byte("hell"), bs)
+
+	t.conn.Reset().WithDontFragment(false)
+	bs, err = t.conn.Bytes(5)
+	t.NoError(err)
+	t.Equal([]byte("hello"), bs)
+}
+
+func (t *ConnTest) TestReset() {
 	go func() {
 		t.Require().NoError(Errors(t.one.Write([]byte("hello"))))
 	}()
 
-	bs, err := t.conn.Preload()
+	bs, err := t.conn.Bytes(5)
 	t.NoError(err)
 	t.Equal([]byte("hello"), bs)
+
+	t.conn.Reset()
 	bs, err = t.conn.Bytes(5)
 	t.NoError(err)
 	t.Equal([]byte("hello"), bs)

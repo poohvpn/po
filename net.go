@@ -2,6 +2,7 @@ package pooh
 
 import (
 	"encoding/binary"
+	"errors"
 	"io"
 	"net"
 	"strconv"
@@ -14,17 +15,14 @@ const (
 	HttpBufferSize = 8 * 1024
 )
 
-func NewConn(c net.Conn, noBuf ...bool) Conn {
+func NewConn(c net.Conn) Conn {
 	if conn, ok := c.(Conn); ok {
 		return conn
 	}
 	conn := &connImpl{
 		Conn: c,
 	}
-	if !(len(noBuf) > 0 && noBuf[0]) {
-		conn.buf = make([]byte, 0, HttpBufferSize)
-	}
-	return conn
+	return conn.WithBuffer()
 }
 
 type Conn interface {
@@ -42,21 +40,33 @@ type Conn interface {
 	WriteUint16(u uint16) error
 	WriteUint32(u uint32) error
 	WriteUint64(u uint64) error
-	Preload() (p []byte, err error)
-	Preplace(replace []byte)
-	Reset()
+	Preplace(replace []byte) Conn
+	Reset() Conn
+	WithBuffer(size ...int) Conn
+	WithDontFragment(dontFragment ...bool) Conn
 }
 
 type connImpl struct {
 	net.Conn
-	buf   []byte
-	index int
+	buf          []byte
+	index        int
+	dontFragment bool
+	init         bool
 }
 
 func (c *connImpl) Read(b []byte) (n int, err error) {
 	switch {
 	case c.buf == nil:
 		return c.Conn.Read(b)
+	case !c.init:
+		c.init = true
+		var nr int
+		nr, err = c.Conn.Read(c.buf[:cap(c.buf)])
+		if err != nil {
+			return 0, err
+		}
+		c.buf = c.buf[:nr]
+		fallthrough
 	case c.index < len(c.buf):
 		n = copy(b, c.buf[c.index:])
 		c.index += n
@@ -87,9 +97,19 @@ func (c *connImpl) Byte() (byte, error) {
 
 func (c *connImpl) Bytes(n int) ([]byte, error) {
 	b := make([]byte, n)
-	_, err := io.ReadFull(c, b)
-	if err != nil {
-		return nil, err
+	if c.dontFragment {
+		nr, err := c.Read(b)
+		if err != nil {
+			return nil, err
+		}
+		if n != nr {
+			return b[:nr], errors.New("pooh.Conn: should not fragment")
+		}
+	} else {
+		_, err := io.ReadFull(c, b)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return b, nil
 }
@@ -175,18 +195,7 @@ func (c *connImpl) WriteUint64(u uint64) error {
 	return err
 }
 
-func (c *connImpl) Preload() (p []byte, err error) {
-	buf := make([]byte, HttpBufferSize)
-	n, err := c.Read(buf)
-	if err != nil {
-		return
-	}
-	p = buf[:n]
-	c.Reset()
-	return
-}
-
-func (c *connImpl) Preplace(replace []byte) {
+func (c *connImpl) Preplace(replace []byte) Conn {
 	need := len(replace) + len(c.buf) - c.index
 	if need > cap(c.buf) {
 		buf := make([]byte, 0, need)
@@ -198,11 +207,33 @@ func (c *connImpl) Preplace(replace []byte) {
 		copy(c.buf, replace)
 		c.buf = c.buf[:need]
 	}
-	c.Reset()
+	return c.Reset()
 }
 
-func (c *connImpl) Reset() {
+func (c *connImpl) Reset() Conn {
 	c.index = 0
+	return c
+}
+
+func (c *connImpl) WithBuffer(size ...int) Conn {
+	switch {
+	case len(size) == 0:
+		c.buf = make([]byte, HttpBufferSize)
+	case size[0] > 0:
+		c.buf = make([]byte, size[0])
+	default:
+		c.buf = nil
+	}
+	return c
+}
+
+func (c *connImpl) WithDontFragment(dontFragment ...bool) Conn {
+	if len(dontFragment) == 0 || dontFragment[0] {
+		c.dontFragment = true
+	} else {
+		c.dontFragment = false
+	}
+	return c
 }
 
 func JoinHostPort(host string, port int) string {
