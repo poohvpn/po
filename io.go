@@ -132,19 +132,23 @@ func CopyPacketTimeout(dst, src net.PacketConn) {
 	}
 }
 
+func tryClose(c io.Closer) error {
+	if c == nil || IsNil(c) {
+		return nil
+	}
+	if closer, ok := c.(interface{ CloseRead() error }); ok {
+		_ = closer.CloseRead()
+	}
+	if closer, ok := c.(interface{ CloseWrite() error }); ok {
+		_ = closer.CloseWrite()
+	}
+	return c.Close()
+}
+
 func Close(cs ...io.Closer) error {
 	errs := new(multierror.Error)
 	for _, c := range cs {
-		if c == nil || IsNil(c) {
-			continue
-		}
-		if closer, ok := c.(interface{ CloseRead() error }); ok {
-			_ = closer.CloseRead()
-		}
-		if closer, ok := c.(interface{ CloseWrite() error }); ok {
-			_ = closer.CloseWrite()
-		}
-		errs = multierror.Append(errs, c.Close())
+		errs = multierror.Append(errs, tryClose(c))
 	}
 	return errs.ErrorOrNil()
 }
