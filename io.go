@@ -1,6 +1,7 @@
 package pooh
 
 import (
+	"github.com/hashicorp/go-multierror"
 	"io"
 	"net"
 	"time"
@@ -131,15 +132,18 @@ func CopyPacketTimeout(dst, src net.PacketConn) {
 	}
 }
 
-func Close(c io.Closer) error {
-	if c == nil || IsNil(c) {
-		return nil
+func Close(cs ...io.Closer) (err error) {
+	for _, c := range cs {
+		if c == nil || IsNil(c) {
+			continue
+		}
+		if closer, ok := c.(interface{ CloseRead() error }); ok {
+			_ = closer.CloseRead()
+		}
+		if closer, ok := c.(interface{ CloseWrite() error }); ok {
+			_ = closer.CloseWrite()
+		}
+		err = multierror.Append(err, c.Close())
 	}
-	if closer, ok := c.(interface{ CloseRead() error }); ok {
-		_ = closer.CloseRead()
-	}
-	if closer, ok := c.(interface{ CloseWrite() error }); ok {
-		_ = closer.CloseWrite()
-	}
-	return c.Close()
+	return
 }
