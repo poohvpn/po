@@ -180,3 +180,12 @@ func (c *connImpl) Preplace(replace []byte) {
 func (c *connImpl) Reset() {
 	c.index = 0
 }
+
+type IP net.IP
+
+func (ip IP) String() string {
+	if len(ip) == 0 {
+		return ""
+	}
+	return net.IP(ip).String()
+}
