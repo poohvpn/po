@@ -29,3 +29,13 @@ func TestInt2Bytes(tt *testing.T) {
 	t.Equal([]byte{0x12, 0x34, 0x56, 0x78}, Int2Bytes(0x12345678, 4))
 	t.Equal([]byte{0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef}, Int2Bytes(0x1234567890abcdef, 8))
 }
+
+func TestUint2Bytes(tt *testing.T) {
+	t := require.New(tt)
+	t.Equal([]byte{0, 0}, Uint162Bytes(0))
+	t.Equal([]byte{0, 0, 0, 0}, Uint322Bytes(0))
+	t.Equal([]byte{0, 0, 0, 0, 0, 0, 0, 0}, Uint642Bytes(0))
+	t.Equal([]byte{0xff, 0xff}, Uint162Bytes(0xffff))
+	t.Equal([]byte{0xff, 0xff, 0xff, 0xff}, Uint322Bytes(0xffffffff))
+	t.Equal([]byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, Uint642Bytes(0xffffffffffffffff))
+}

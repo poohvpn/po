@@ -35,6 +35,9 @@ type Conn interface {
 	Uint64() (u uint64, err error)
 	Frame(size int) ([]byte, error)
 	WriteFrame(p []byte, size int) error
+	WriteUint16(u uint16) error
+	WriteUint32(u uint32) error
+	WriteUint64(u uint64) error
 	Preload() (p []byte, err error)
 	Preplace(replace []byte)
 	Reset()
@@ -130,6 +133,21 @@ func (c *connImpl) Frame(size int) ([]byte, error) {
 
 func (c *connImpl) WriteFrame(p []byte, size int) error {
 	_, err := c.Conn.Write(append(Int2Bytes(len(p), size), p...))
+	return err
+}
+
+func (c *connImpl) WriteUint16(u uint16) error {
+	_, err := c.Conn.Write(Uint162Bytes(u))
+	return err
+}
+
+func (c *connImpl) WriteUint32(u uint32) error {
+	_, err := c.Conn.Write(Uint322Bytes(u))
+	return err
+}
+
+func (c *connImpl) WriteUint64(u uint64) error {
+	_, err := c.Conn.Write(Uint642Bytes(u))
 	return err
 }
 
