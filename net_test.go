@@ -1,6 +1,7 @@
 package pooh
 
 import (
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"net"
 	"testing"
@@ -97,4 +98,18 @@ func (t *ConnTest) TestPreplace() {
 
 func TestExampleTestSuite(t *testing.T) {
 	suite.Run(t, new(ConnTest))
+}
+
+func TestIsIPv4(tt *testing.T) {
+	t := assert.New(tt)
+	t.False(IsIPv4(net.IP(nil)))
+	t.False(IsIPv4(net.IPv6unspecified))
+	t.True(IsIPv4(net.IPv4(1, 1, 1, 1)))
+}
+
+func TestIsIPv6(tt *testing.T) {
+	t := assert.New(tt)
+	t.False(IsIPv6(net.IP(nil)))
+	t.False(IsIPv6(net.IPv4(1, 1, 1, 1)))
+	t.True(IsIPv6(net.IPv6unspecified))
 }
