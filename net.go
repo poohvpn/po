@@ -30,11 +30,13 @@ type Conn interface {
 	net.Conn
 	Byte() (byte, error)
 	Bytes(n int) ([]byte, error)
+	BytesString(n int) (string, error)
 	Int(size int) (i int, err error)
 	Uint16() (u uint16, err error)
 	Uint32() (u uint32, err error)
 	Uint64() (u uint64, err error)
 	Frame(size int) ([]byte, error)
+	FrameString(size int) (string, error)
 	WriteFrame(p []byte, size int) error
 	WriteUint16(u uint16) error
 	WriteUint32(u uint32) error
@@ -85,7 +87,19 @@ func (c *connImpl) Byte() (byte, error) {
 func (c *connImpl) Bytes(n int) ([]byte, error) {
 	b := make([]byte, n)
 	_, err := io.ReadFull(c, b)
-	return b, err
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
+}
+
+func (c *connImpl) BytesString(n int) (string, error) {
+	b := make([]byte, n)
+	_, err := io.ReadFull(c, b)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }
 
 func (c *connImpl) Int(size int) (i int, err error) {
@@ -130,6 +144,14 @@ func (c *connImpl) Frame(size int) ([]byte, error) {
 		return nil, err
 	}
 	return c.Bytes(Int(bs))
+}
+
+func (c *connImpl) FrameString(size int) (string, error) {
+	bs, err := c.Bytes(size)
+	if err != nil {
+		return "", err
+	}
+	return c.BytesString(Int(bs))
 }
 
 func (c *connImpl) WriteFrame(p []byte, size int) error {
