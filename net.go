@@ -6,7 +6,6 @@ import (
 	"io"
 	"net"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -240,8 +239,4 @@ func (c *connImpl) WithDontFragment(dontFragment ...bool) Conn {
 
 func JoinHostPort(host string, port int) string {
 	return net.JoinHostPort(host, strconv.Itoa(port))
-}
-
-func IsConnClosed(err error) bool {
-	return strings.Contains(err.Error(), "use of closed network connection")
 }
