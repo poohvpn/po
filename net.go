@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"io"
 	"net"
+	"strconv"
 	"time"
 )
 
@@ -188,4 +189,8 @@ func (ip IP) String() string {
 		return ""
 	}
 	return net.IP(ip).String()
+}
+
+func JoinHostPort(host string, port int) string {
+	return net.JoinHostPort(host, strconv.Itoa(port))
 }
