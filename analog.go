@@ -46,12 +46,3 @@ func (a *Analog) Simulate() {
 func (a *Analog) Close() error {
 	return Errors(Close(a.SrcConn), Close(a.DstConn))
 }
-
-type Modulator interface {
-	Modulate(a *Analog) (err error, ok bool)
-	Proto() string
-}
-
-type Demodulator interface {
-	Demodulate(a *Analog) (err error, ok bool)
-}
