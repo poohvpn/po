@@ -32,5 +32,5 @@ func (p *pcgSource) Uint64() uint64 {
 }
 
 func (p *pcgSource) Seed(seed int64) {
-	p.PCG64.Seed(uint64(seed), 73171451331446857877, 5049815677178091608, uint64(^seed))
+	p.PCG64.Seed(uint64(seed), 7317145131446857877, 5049815677178091608, uint64(^seed))
 }
