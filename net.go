@@ -1,4 +1,4 @@
-package pooh
+package po
 
 import (
 	"encoding/binary"

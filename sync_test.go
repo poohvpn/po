@@ -1,4 +1,4 @@
-package pooh
+package po
 
 import (
 	"github.com/stretchr/testify/require"

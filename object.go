@@ -1,4 +1,4 @@
-package pooh
+package po
 
 type Object map[string]interface{}
 

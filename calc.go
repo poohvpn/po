@@ -1,4 +1,4 @@
-package pooh
+package po
 
 func Checksum(data []byte) uint16 {
 	var csum uint32

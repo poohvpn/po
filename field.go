@@ -1,4 +1,4 @@
-package pooh
+package po
 
 type Demodulator interface {
 	Demodulate(a *Analog) error

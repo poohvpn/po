@@ -1,4 +1,4 @@
-module github.com/poohvpn/pooh
+module github.com/poohvpn/po
 
 go 1.16
 

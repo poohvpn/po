@@ -1,4 +1,4 @@
-package pooh
+package po
 
 func TryOk(fs ...func() bool) bool {
 	for _, f := range fs {
