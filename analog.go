@@ -42,7 +42,9 @@ func (a *Analog) Simulate() {
 	case HeaderTCP:
 		Swap(a.SrcConn, a.DstConn)
 	case HeaderUDP, HeaderICMDP4, HeaderICMDP6:
-		SwapTimeout(a.SrcConn, a.DstConn)
+		Swap(a.SrcConn, a.DstConn, CopyOption{
+			Timeout: PacketTimeout,
+		})
 	default:
 		log.Panic().Interface("dst_header", a.DstAddr.Header).Msg("unknown destination protocol")
 	}
