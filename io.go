@@ -1,24 +1,30 @@
 package pooh
 
 import (
-	"github.com/hashicorp/go-multierror"
 	"io"
 	"net"
 	"time"
+
+	"github.com/hashicorp/go-multierror"
 )
 
 const (
 	BufferSize = 64 * 1024
 )
 
-func Swap(rwc1, rwc2 io.ReadWriteCloser) {
-	done := make(chan struct{}, 2)
+type CopyOption struct {
+	BufferSize int
+	Timeout    time.Duration
+}
+
+func Swap(rwc1, rwc2 net.Conn, option ...CopyOption) {
+	done := make(chan struct{})
 	go func() {
-		Copy(rwc2, rwc1)
+		Copy(rwc2, rwc1, option...)
 		done <- struct{}{}
 	}()
 	go func() {
-		Copy(rwc1, rwc2)
+		Copy(rwc1, rwc2, option...)
 		done <- struct{}{}
 	}()
 	<-done
@@ -27,107 +33,59 @@ func Swap(rwc1, rwc2 io.ReadWriteCloser) {
 	<-done
 }
 
-func Copy(dst io.Writer, src io.Reader) {
-	if wt, ok := src.(io.WriterTo); ok {
-		_, _ = wt.WriteTo(dst)
-		return
+func Copy(dst, src net.Conn, option ...CopyOption) {
+	var opt CopyOption
+	if len(option) > 0 {
+		opt = option[0]
 	}
-	// Similarly, if the writer has a ReadFrom method, use it to do the copy.
-	if rt, ok := dst.(io.ReaderFrom); ok {
-		_, _ = rt.ReadFrom(src)
-		return
+	if opt.BufferSize <= 0 {
+		opt.BufferSize = BufferSize
 	}
-	buf := make([]byte, BufferSize)
-	for {
-		nr, er := src.Read(buf)
-		if nr > 0 {
-			nw, ew := dst.Write(buf[0:nr])
-			if ew != nil || nr != nw {
-				return
-			}
+	if opt.Timeout <= 0 {
+		if wt, ok := src.(io.WriterTo); ok {
+			_, _ = wt.WriteTo(dst)
+			return
 		}
-		if er != nil {
+		// Similarly, if the writer has a ReadFrom method, use it to do the copy.
+		if rt, ok := dst.(io.ReaderFrom); ok {
+			_, _ = rt.ReadFrom(src)
 			return
 		}
 	}
-}
-
-func SwapTimeout(conn1, conn2 net.Conn) {
-	done := make(chan struct{}, 2)
-	go func() {
-		CopyTimeout(conn2, conn1)
-		done <- struct{}{}
-	}()
-	go func() {
-		CopyTimeout(conn1, conn2)
-		done <- struct{}{}
-	}()
-	<-done
-	_ = Close(conn1)
-	_ = Close(conn2)
-	<-done
-}
-
-func CopyTimeout(dst, src net.Conn) {
-	buf := make([]byte, BufferSize)
-	for {
-		err := src.SetReadDeadline(time.Now().Add(PacketTimeout))
-		if err != nil {
-			return
-		}
-		nr, er := src.Read(buf)
-		if nr > 0 {
-			err = dst.SetWriteDeadline(time.Now().Add(PacketTimeout))
+	buf := make([]byte, opt.BufferSize)
+	if opt.Timeout > 0 {
+		for {
+			err := src.SetReadDeadline(time.Now().Add(opt.Timeout))
 			if err != nil {
 				return
 			}
-			nw, ew := dst.Write(buf[:nr])
-			if ew != nil || nw != nr {
+			nr, er := src.Read(buf)
+			if nr > 0 {
+				err = dst.SetWriteDeadline(time.Now().Add(opt.Timeout))
+				if err != nil {
+					return
+				}
+				nw, ew := dst.Write(buf[:nr])
+				if ew != nil || nw != nr {
+					return
+				}
+			}
+			if er != nil {
 				return
 			}
 		}
-		if er != nil {
-			return
-		}
-	}
-}
-
-func SwapPacketTimeout(conn1, conn2 net.PacketConn) {
-	done := make(chan struct{}, 2)
-	go func() {
-		CopyPacketTimeout(conn2, conn1)
-		done <- struct{}{}
-	}()
-	go func() {
-		CopyPacketTimeout(conn1, conn2)
-		done <- struct{}{}
-	}()
-	<-done
-	_ = Close(conn1)
-	_ = Close(conn2)
-	<-done
-}
-
-func CopyPacketTimeout(dst, src net.PacketConn) {
-	buf := make([]byte, BufferSize)
-	for {
-		err := src.SetReadDeadline(time.Now().Add(PacketTimeout))
-		if err != nil {
-			return
-		}
-		nr, addr, er := src.ReadFrom(buf)
-		if nr > 0 {
-			err = dst.SetWriteDeadline(time.Now().Add(PacketTimeout))
-			if err != nil {
+	} else {
+		for {
+			nr, er := src.Read(buf)
+			if nr > 0 {
+				nw, ew := dst.Write(buf[0:nr])
+				if ew != nil || nr != nw {
+					return
+				}
+			}
+			if er != nil {
 				return
 			}
-			nw, ew := dst.WriteTo(buf[:nr], addr)
-			if ew != nil || nw != nr {
-				return
-			}
-		}
-		if er != nil {
-			return
 		}
 	}
 }
