@@ -10,12 +10,20 @@ type Once struct {
 	doneM  sync.Mutex
 	doneC  chan struct{}
 	doneCM sync.Mutex
+	err    error
 }
 
 func (o *Once) Do(f func()) {
 	if atomic.LoadUint32(&o.done) == 0 {
 		o.doSlow(f)
 	}
+}
+
+func (o *Once) ErrorDo(f func() error) error {
+	o.Do(func() {
+		o.err = f()
+	})
+	return o.err
 }
 
 func (o *Once) Wait() <-chan struct{} {
@@ -49,32 +57,4 @@ func (o *Once) doSlow(f func()) {
 		o.Wait()
 	}()
 	f()
-}
-
-type ErrorOnce struct {
-	once Once
-	err  error
-}
-
-func (o *ErrorOnce) Do(f func() error) error {
-	o.once.Do(func() {
-		o.err = f()
-	})
-	return o.err
-}
-
-func (o *ErrorOnce) Wait() <-chan struct{} {
-	return o.once.Wait()
-}
-
-func (o *ErrorOnce) Done() bool {
-	return o.once.Done()
-}
-
-func (o *ErrorOnce) Error() string {
-	return o.err.Error()
-}
-
-func (o *ErrorOnce) Unwarp() error {
-	return o.err
 }
