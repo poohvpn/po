@@ -18,22 +18,28 @@ func Int2Bytes(v, size int) (bs []byte) {
 	return
 }
 
-func Uint162Bytes(u uint16) []byte {
-	var bs [2]byte
-	binary.BigEndian.PutUint16(bs[:], u)
-	return bs[:]
+func Uint162Bytes(u ...uint16) []byte {
+	bs := make([]byte, len(u)*2)
+	for i, v := range u {
+		binary.BigEndian.PutUint16(bs[i*2:], v)
+	}
+	return bs
 }
 
-func Uint322Bytes(u uint32) []byte {
-	var bs [4]byte
-	binary.BigEndian.PutUint32(bs[:], u)
-	return bs[:]
+func Uint322Bytes(u ...uint32) []byte {
+	bs := make([]byte, len(u)*4)
+	for i, v := range u {
+		binary.BigEndian.PutUint32(bs[i*4:], v)
+	}
+	return bs
 }
 
-func Uint642Bytes(u uint64) []byte {
-	var bs [8]byte
-	binary.BigEndian.PutUint64(bs[:], u)
-	return bs[:]
+func Uint642Bytes(u ...uint64) []byte {
+	bs := make([]byte, len(u)*8)
+	for i, v := range u {
+		binary.BigEndian.PutUint64(bs[i*8:], v)
+	}
+	return bs
 }
 
 func Duplicate(bs []byte) []byte {
