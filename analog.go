@@ -1,15 +1,16 @@
 package pooh
 
 import (
-	"github.com/rs/zerolog/log"
 	"net"
+
+	"github.com/rs/zerolog/log"
 )
 
 type Analog struct {
 	SrcConn     Conn
 	SrcProto    string
 	SrcAddr     *Addr
-	Context     Map
+	Context     Object
 	DstAddr     *Addr
 	Demodulator Demodulator
 	DstConn     net.Conn

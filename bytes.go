@@ -35,3 +35,14 @@ func Uint642Bytes(u uint64) []byte {
 	binary.BigEndian.PutUint64(bs[:], u)
 	return bs[:]
 }
+
+func Duplicate(bs []byte) []byte {
+	if bs == nil {
+		return nil
+	}
+	bsDup := make([]byte, len(bs))
+	if len(bs) > 0 {
+		copy(bsDup, bs)
+	}
+	return bsDup
+}

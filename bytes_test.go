@@ -1,8 +1,9 @@
 package pooh
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestInt(tt *testing.T) {
@@ -38,4 +39,12 @@ func TestUint2Bytes(tt *testing.T) {
 	t.Equal([]byte{0xff, 0xff}, Uint162Bytes(0xffff))
 	t.Equal([]byte{0xff, 0xff, 0xff, 0xff}, Uint322Bytes(0xffffffff))
 	t.Equal([]byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, Uint642Bytes(0xffffffffffffffff))
+}
+
+func TestDuplicate(tt *testing.T) {
+	t := require.New(tt)
+	t.Equal([]byte(nil), Duplicate(nil))
+	t.Equal([]byte{}, Duplicate([]byte{}))
+	t.NotEqual(nil, Duplicate([]byte{}))
+	t.Equal([]byte{1, 2, 3}, Duplicate([]byte{1, 2, 3}))
 }
