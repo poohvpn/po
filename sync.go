@@ -70,3 +70,11 @@ func (o *ErrorOnce) Wait() <-chan struct{} {
 func (o *ErrorOnce) Done() bool {
 	return o.once.Done()
 }
+
+func (o *ErrorOnce) Error() string {
+	return o.err.Error()
+}
+
+func (o *ErrorOnce) Unwarp() error {
+	return o.err
+}
