@@ -1,10 +1,10 @@
 package pooh
 
 type Modulator interface {
-	Modulate(a *Analog) (err error, ok bool)
+	Modulate(a *Analog) error
 	Proto() string
 }
 
 type Demodulator interface {
-	Demodulate(a *Analog) (err error, ok bool)
+	Demodulate(a *Analog) error
 }

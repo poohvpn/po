@@ -7,7 +7,7 @@ import (
 
 type Analog struct {
 	SrcConn     Conn
-	SrcProxy    string
+	SrcProto    string
 	SrcAddr     *Addr
 	Context     Map
 	DstAddr     *Addr
@@ -27,6 +27,10 @@ func (a *Analog) Fork(src net.Conn) *Analog {
 	res := *a
 	res.SrcConn = NewConn(src)
 	return &res
+}
+
+func (a *Analog) Accepted() bool {
+	return a.SrcProto != ""
 }
 
 func (a *Analog) Simulate() {
