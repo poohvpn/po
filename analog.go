@@ -7,13 +7,13 @@ import (
 )
 
 type Analog struct {
-	SrcConn     Conn
-	SrcProto    string
-	SrcAddr     *Addr
-	Context     Object
-	DstAddr     *Addr
-	Demodulator Demodulator
-	DstConn     net.Conn
+	SrcConn   Conn
+	SrcProto  string
+	SrcAddr   *Addr
+	Context   Object
+	DstAddr   *Addr
+	Modulator Modulator
+	DstConn   net.Conn
 }
 
 func NewAnalog(src net.Conn) *Analog {
