@@ -50,3 +50,23 @@ func (o *Once) doSlow(f func()) {
 	}()
 	f()
 }
+
+type ErrorOnce struct {
+	once Once
+	err  error
+}
+
+func (o *ErrorOnce) Do(f func() error) error {
+	o.once.Do(func() {
+		o.err = f()
+	})
+	return o.err
+}
+
+func (o *ErrorOnce) Wait() <-chan struct{} {
+	return o.once.Wait()
+}
+
+func (o *ErrorOnce) Done() bool {
+	return o.once.Done()
+}
