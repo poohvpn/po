@@ -132,7 +132,8 @@ func CopyPacketTimeout(dst, src net.PacketConn) {
 	}
 }
 
-func Close(cs ...io.Closer) (err error) {
+func Close(cs ...io.Closer) error {
+	errs := new(multierror.Error)
 	for _, c := range cs {
 		if c == nil || IsNil(c) {
 			continue
@@ -143,7 +144,7 @@ func Close(cs ...io.Closer) (err error) {
 		if closer, ok := c.(interface{ CloseWrite() error }); ok {
 			_ = closer.CloseWrite()
 		}
-		err = multierror.Append(err, c.Close())
+		errs = multierror.Append(errs, c.Close())
 	}
-	return
+	return errs.ErrorOrNil()
 }

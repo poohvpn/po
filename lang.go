@@ -45,13 +45,14 @@ func (m Map) GetString(key string) (value string) {
 	return
 }
 
-func Errors(i ...interface{}) (err error) {
+func Errors(i ...interface{}) error {
+	errs := new(multierror.Error)
 	for _, v := range i {
 		if e, ok := v.(error); ok && e != nil {
-			err = multierror.Append(err, e)
+			errs = multierror.Append(errs, e)
 		}
 	}
-	return
+	return errs.ErrorOrNil()
 }
 
 func IsNil(object interface{}) bool {
