@@ -13,6 +13,11 @@ func IsIPv6(ip net.IP) bool {
 	return ip.To16() != nil && !IsIPv4(ip)
 }
 
+func IsIP(ip net.IP) bool {
+	ipLen := len(ip)
+	return ipLen == net.IPv4len || ipLen == net.IPv6len
+}
+
 func IsNil(object interface{}) bool {
 	if object == nil {
 		return true
